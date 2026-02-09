@@ -83,7 +83,7 @@ const usePdfProcessor = () => {
       const fullWidth = Math.round(viewportMax.width);
       const fullHeight = Math.round(viewportMax.height);
       const maxLevel = calculateMaxLevel(fullWidth, fullHeight);
-      const cache = await caches.open(cacheName);
+      const cache = await caches.open('tiles');
 
       // 設定檔
       const osdConfig = {
@@ -260,7 +260,7 @@ export default function PdfViewer() {
     const file = e.target.files[0];
     if (file && file.type === 'application/pdf') {
       setPdfFile(file);
-      const cache = await caches.open(cacheName);
+
       await caches.delete(`tiles`);
       await loadPdf(file);
     }
@@ -293,7 +293,7 @@ export default function PdfViewer() {
   if (!pdfjs) return '載入中...';
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
+    <div className="h-full bg-slate-50 p-4 md:p-8 font-sans text-slate-900 mt-14">
       <div className="max-w-5xl mx-auto">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold flex items-center justify-center gap-2">

@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-full w-full`}
       >
-        <nav className="border-b border-gray-300 py-4 px-3 flex justify-end gap-3 bg-gray-200 shadow-xl">
+        <nav className="fixed top-0 w-full border-b border-gray-300 py-4 px-3 flex justify-end gap-3 bg-gray-200 shadow-xl">
           <Link
             href="/uploadPage"
             className="text-black underline underline-offset-3"

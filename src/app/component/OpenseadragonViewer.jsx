@@ -100,7 +100,7 @@ export default function OpenSeadragonViewer({ href }) {
             minLevel: 0,
             maxLevel,
             getTileUrl: (level, x, y) =>
-              `${tilesUrl}/${level}/${x}_${y}.${format}`,
+              `/${process.env.NEXT_PUBLIC_APP_NAME}/${tilesUrl}/${level}/${x}_${y}.${format}`,
           };
 
           if (cancelled) return;
