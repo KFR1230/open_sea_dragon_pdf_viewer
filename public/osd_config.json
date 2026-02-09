@@ -1,0 +1,9 @@
+{
+  "width": 4768,
+  "height": 3367,
+  "tileSize": 256,
+  "tileOverlap": 0,
+  "maxLevel": 13,
+  "tilesUrl": "/tiles",
+  "format": "png"
+}
