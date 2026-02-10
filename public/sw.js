@@ -6,7 +6,8 @@
 
 const CACHE_VERSION = 'v2';
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
-const TILES_CACHE_PREFIX = `tiles-${CACHE_VERSION}`;
+const NEXT_STATIC_CACHE = `next-static-${CACHE_VERSION}`;
+const TILES_CACHE_PREFIX = `tiles`;
 
 // App Shell: keep this SMALL. Only what you need to boot.
 const APP_SHELL_ASSETS = [
@@ -28,6 +29,11 @@ function isSameOrigin(url) {
 function isTileRequest(url) {
   // Your current tiles path pattern
   return url.pathname.startsWith('/tiles/');
+}
+
+function isNextStaticAsset(url) {
+  // Next.js build assets: CSS/JS/chunks that must exist offline for styles to render
+  return url.pathname.startsWith('/_next/static/');
 }
 
 self.addEventListener('install', (event) => {
@@ -52,6 +58,7 @@ self.addEventListener('activate', (event) => {
           .filter((k) => {
             // keep current version caches
             if (k === APP_SHELL_CACHE) return false;
+            if (k === NEXT_STATIC_CACHE) return false;
             if (k.startsWith(TILES_CACHE_PREFIX)) return false;
             // delete everything else
             return true;
@@ -104,7 +111,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2) Tiles: cache-first (offline-first)
+  // 2) Next.js build assets (CSS/JS/chunks): cache-first so offline pages keep styles
+  if (isSameOrigin(url) && isNextStaticAsset(url)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(NEXT_STATIC_CACHE);
+        const hit = await cache.match(req);
+        if (hit) return hit;
+
+        try {
+          const res = await fetch(req);
+          if (res.ok) cache.put(req, res.clone());
+          return res;
+        } catch {
+          // No cached asset available; fail hard (better than returning a 503 text body for CSS/JS)
+          return Response.error();
+        }
+      })()
+    );
+    return;
+  }
+
+  // 3) Tiles: cache-first (offline-first)
   if (isSameOrigin(url) && isTileRequest(url)) {
     event.respondWith(
       (async () => {
@@ -136,7 +164,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3) Same-origin static assets: stale-while-revalidate (optional)
+  // 4) Same-origin static assets: stale-while-revalidate (optional)
   // Keeps app snappy while still updating.
   if (isSameOrigin(url)) {
     event.respondWith(
