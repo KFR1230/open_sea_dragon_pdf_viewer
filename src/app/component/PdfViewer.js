@@ -276,11 +276,13 @@ export default function PdfViewer() {
     fileInputRef.current?.click();
   };
 
-  // useEffect(() => {
-  //   return () => {
-  //     caches.delete(`tiles`);
-  //   };
-  // }, []);
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch((err) => console.error('SW register failed', err));
+  }, []);
 
   if (!pdfjs) return '載入中...';
 
