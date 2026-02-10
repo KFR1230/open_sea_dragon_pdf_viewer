@@ -79,7 +79,7 @@ export default function OpenSeadragonViewer({ href }) {
             maxLevel,
             tilesUrl = '/tiles',
             format = 'png',
-          } = cfg || {};
+          } = cfg.tileSources || {};
 
           if (
             !width ||
@@ -100,7 +100,7 @@ export default function OpenSeadragonViewer({ href }) {
             minLevel: 0,
             maxLevel,
             getTileUrl: (level, x, y) =>
-              `/${process.env.NEXT_PUBLIC_APP_NAME}/${tilesUrl}/${level}/${x}_${y}.${format}`,
+              `${tilesUrl}/${level}/${x}_${y}.${format}`,
           };
 
           if (cancelled) return;

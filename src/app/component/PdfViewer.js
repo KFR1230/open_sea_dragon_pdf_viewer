@@ -99,7 +99,7 @@ const usePdfProcessor = () => {
       const osdConfigPath = `/tiles/osd_config.json`;
       const req = new Request(osdConfigPath, { method: 'GET' });
 
-      const res = new Response(osdConfig, {
+      const res = new Response(JSON.stringify(osdConfig), {
         headers: {
           'Content-Type': 'application/json',
           // 你可以加 cache-control 但對 Cache Storage 本身沒差，主要是語意
@@ -133,7 +133,7 @@ const usePdfProcessor = () => {
 
         const cols = Math.ceil(canvas.width / TILE_SIZE);
         const rows = Math.ceil(canvas.height / TILE_SIZE);
-        const levelFolder = tilesFolder.folder(level.toString());
+        // const levelFolder = tilesFolder.folder(level.toString());
 
         const levelPreviews = [];
 
@@ -158,7 +158,7 @@ const usePdfProcessor = () => {
             const blob = await new Promise((r) =>
               tileCanvas.toBlob(r, 'image/png')
             );
-            const tilePath = `/tiles/${jobId}/${level}/${x}_${y}.png`;
+            const tilePath = `/tiles/${level}/${x}_${y}.png`;
             const req = new Request(tilePath, { method: 'GET' });
 
             const res = new Response(blob, {
@@ -284,11 +284,11 @@ export default function PdfViewer() {
       .catch((err) => console.error('SW register failed', err));
   }, []);
 
-  useEffect(() => {
-    return () => {
-      caches.delete(`tiles`);
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     caches.delete(`tiles`);
+  //   };
+  // }, []);
 
   if (!pdfjs) return '載入中...';
 

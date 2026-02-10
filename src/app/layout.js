@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
             上傳PDF
           </Link>
           <Link
-            href="/homePage"
+            href="/pdfViewerPage"
             className="text-black underline underline-offset-3"
           >
             圖片縮放頁

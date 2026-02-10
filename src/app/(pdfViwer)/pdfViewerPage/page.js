@@ -35,9 +35,7 @@ const OpenSeadragonViewer = dynamic(
 export default function Page() {
   return (
     <div className="bg-black h-full w-full pt-14">
-      <OpenSeadragonViewer
-        href={`/${process.env.NEXT_PUBLIC_APP_NAME}/tiles/osd_config.json`}
-      />
+      <OpenSeadragonViewer href={`/tiles/osd_config.json`} />
     </div>
   );
 }

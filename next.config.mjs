@@ -1,14 +1,10 @@
 /** @type {import('next').NextConfig} */
-const repo = 'open_sea_dragon_pdf_viewer'; // 例: my-gh-page
-
 const nextConfig = {
-  output: 'export',
-  trailingSlash: true,
-  images: { unoptimized: true },
-
-  // 你是 Project Pages（帳號.github.io/repo/）就需要
-  basePath: `/${repo}`,
-  assetPrefix: `/${repo}`,
+  /* config options here */
+  logging: false,
+  experimental: {
+    browserDebugInfoInTerminal: false, // 這才是「轉發 console 到 terminal」 [oai_citation:2‡nextjs.org](https://nextjs.org/docs/app/api-reference/config/next-config-js/browserDebugInfoInTerminal?utm_source=chatgpt.com)
+  },
 };
 
 export default nextConfig;
