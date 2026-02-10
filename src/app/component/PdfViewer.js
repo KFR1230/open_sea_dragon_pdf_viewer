@@ -8,17 +8,14 @@ import {
   Layers,
   Cpu,
 } from 'lucide-react';
-import * as pdfjs from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf';
 import JSZip from 'jszip';
 
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
 // Use the ESM worker bundled via your build tool (avoids relying on unpkg and mixed-content issues)
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 /**
  * 常數定義 (對應 src/utils/constant)
