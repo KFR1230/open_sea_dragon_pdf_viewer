@@ -1,4 +1,19 @@
 // public/sw.js
+const CACHE_VERSION = 'v1';
+const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
+
+const APP_SHELL_ASSETS = [
+  '/', // 首頁
+  '/uploadPage', // 入口頁 1
+  '/pdfViewerPage', // 入口頁 2
+  '/manifest.json',
+  // 你的 icon
+  '/pwa/favicon-96x96.png',
+  '/pwa/web-app-manifest-192x192.png',
+  '/pwa/web-app-manifest-512x512.png',
+  // 如果你有 offline 頁面就加：
+  // '/offline'
+];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

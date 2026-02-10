@@ -283,14 +283,6 @@ export default function PdfViewer() {
     fileInputRef.current?.click();
   };
 
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-
-    navigator.serviceWorker
-      .register('/sw.js')
-      .catch((err) => console.error('SW register failed', err));
-  }, []);
-
   // useEffect(() => {
   //   return () => {
   //     caches.delete(`tiles`);

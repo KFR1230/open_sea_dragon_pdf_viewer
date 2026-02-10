@@ -7,6 +7,13 @@ export default function Home() {
   // useEffect(() => {
   //   redirect('/uploadPage');
   // }, []);
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker
+      .register('/sw.js')
+      .catch((err) => console.error('SW register failed', err));
+  }, []);
 
   return (
     <div className=" min-h-screen bg-zinc-50 font-sans ">
