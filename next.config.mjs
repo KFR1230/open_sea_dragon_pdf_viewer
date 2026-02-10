@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+const repo = 'open_sea_dragon_pdf_viewer'; // 例: my-gh-page
 
 const nextConfig = {
   output: 'export',
@@ -6,8 +7,8 @@ const nextConfig = {
   images: { unoptimized: true },
 
   // 你是 Project Pages（帳號.github.io/repo/）就需要
-  basePath: `/${process.env.NEXT_PUBLIC_APP_NAME}`,
-  assetPrefix: `/${process.env.NEXT_PUBLIC_APP_NAME}/`,
+  basePath: `/${repo}`,
+  assetPrefix: `/${repo}`,
 };
 
 export default nextConfig;
