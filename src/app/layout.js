@@ -38,6 +38,9 @@ export default function RootLayout({ children }) {
           </Link>
         </nav>
         {children}
+        <footer className="fixed bottom-0 right-0 z-50 text-gray-800 text-sm">
+          v 0.2.3
+        </footer>
       </body>
     </html>
   );

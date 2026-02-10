@@ -8,17 +8,17 @@ import {
   Layers,
   Cpu,
 } from 'lucide-react';
-import * as pdfjs from 'pdfjs-dist/legacy/build/pdf';
+// import * as pdfjs from 'pdfjs-dist/legacy/build/pdf';
 import JSZip from 'jszip';
 
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
 // Use the ESM worker bundled via your build tool (avoids relying on unpkg and mixed-content issues)
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+//   'pdfjs-dist/build/pdf.worker.min.mjs',
+//   import.meta.url
+// ).toString();
 
 /**
  * 常數定義 (對應 src/utils/constant)
@@ -43,30 +43,30 @@ const usePdfProcessor = () => {
   const [status, setStatus] = useState({ message: '', type: 'info' });
   const [previews, setPreviews] = useState([]);
 
-  const loadPdf = async (file) => {
-    setStatus({ message: '正在讀取 PDF...', type: 'info' });
-    const reader = new FileReader();
+  // const loadPdf = async (file) => {
+  //   setStatus({ message: '正在讀取 PDF...', type: 'info' });
+  //   const reader = new FileReader();
 
-    return new Promise((resolve, reject) => {
-      reader.onload = async (event) => {
-        const typedarray = new Uint8Array(event.target.result);
-        try {
-          const loadingTask = pdfjs.getDocument(typedarray);
-          const pdf = await loadingTask.promise;
-          setPdfInstance(pdf);
-          setStatus({
-            message: `PDF 加載成功：共 ${pdf.numPages} 頁`,
-            type: 'success',
-          });
-          resolve(pdf);
-        } catch (err) {
-          setStatus({ message: '無法讀取 PDF', type: 'error' });
-          reject(err);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-  };
+  //   return new Promise((resolve, reject) => {
+  //     reader.onload = async (event) => {
+  //       const typedarray = new Uint8Array(event.target.result);
+  //       try {
+  //         const loadingTask = pdfjs.getDocument(typedarray);
+  //         const pdf = await loadingTask.promise;
+  //         setPdfInstance(pdf);
+  //         setStatus({
+  //           message: `PDF 加載成功：共 ${pdf.numPages} 頁`,
+  //           type: 'success',
+  //         });
+  //         resolve(pdf);
+  //       } catch (err) {
+  //         setStatus({ message: '無法讀取 PDF', type: 'error' });
+  //         reject(err);
+  //       }
+  //     };
+  //     reader.readAsArrayBuffer(file);
+  //   });
+  // };
 
   const generateTiles = async (pdf, fileName) => {
     if (!pdf || !window) return;
@@ -209,7 +209,7 @@ const usePdfProcessor = () => {
     progress,
     status,
     previews,
-    loadPdf,
+    // loadPdf,
     generateTiles,
   };
 };
@@ -224,7 +224,7 @@ export default function PdfViewer() {
     progress,
     status,
     previews,
-    loadPdf,
+    // loadPdf,
     generateTiles,
   } = usePdfProcessor();
 
@@ -262,7 +262,7 @@ export default function PdfViewer() {
       setPdfFile(file);
 
       await caches.delete(`tiles`);
-      await loadPdf(file);
+      // await loadPdf(file);
     }
   };
 
@@ -290,7 +290,7 @@ export default function PdfViewer() {
   //   };
   // }, []);
 
-  if (!pdfjs) return '載入中...';
+  // if (!pdfjs) return '載入中...';
 
   return (
     <div className="h-full bg-slate-50 p-4 md:p-8 font-sans text-slate-900 mt-14">
