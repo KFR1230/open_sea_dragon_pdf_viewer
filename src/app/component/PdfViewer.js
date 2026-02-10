@@ -14,19 +14,12 @@ import JSZip from 'jszip';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// Use the ESM worker bundled via your build tool (avoids relying on unpkg and mixed-content issues)
-// pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-//   'pdfjs-dist/build/pdf.worker.min.mjs',
-//   import.meta.url
-// ).toString();
-try {
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.mjs',
-    import.meta.url
-  ).toString();
-} catch {
-  pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
-}
+// Use the bundled worker from pdfjs-dist. This will be emitted under /_next/static/...
+// Our Service Worker caches /_next/static/* so the worker remains available offline after first load.
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 /**
  * 常數定義 (對應 src/utils/constant)
  */
