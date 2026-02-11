@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import JSZip from 'jszip';
+import { v4 as getId } from 'uuid';
 
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -84,6 +85,7 @@ const usePdfProcessor = () => {
       const fullHeight = Math.round(viewportMax.height);
       const maxLevel = calculateMaxLevel(fullWidth, fullHeight);
       const cache = await caches.open('tiles');
+      const uuid = getId();
 
       // 設定檔
       const osdConfig = {
@@ -93,7 +95,9 @@ const usePdfProcessor = () => {
           tileSize: TILE_SIZE,
           tileOverlap: 0,
           maxLevel: maxLevel,
-          getTileUrl: '(level, x, y) => `/tiles/${level}/${x}_${y}.png`',
+          uuid,
+          getTileUrl:
+            '(level, x, y) => `/tiles/${uuid}/${level}/${x}_${y}.png`',
         },
       };
       const osdConfigPath = `/tiles/osd_config.json`;
@@ -158,7 +162,9 @@ const usePdfProcessor = () => {
             const blob = await new Promise((r) =>
               tileCanvas.toBlob(r, 'image/png')
             );
-            const tilePath = `/tiles/${level}/${x}_${y}.png`;
+
+            const versionedTilesUrl = uuid ? `/tiles/${uuid}` : '/tiles';
+            const tilePath = `${versionedTilesUrl}/${level}/${x}_${y}.png`;
             const req = new Request(tilePath, { method: 'GET' });
 
             const res = new Response(blob, {

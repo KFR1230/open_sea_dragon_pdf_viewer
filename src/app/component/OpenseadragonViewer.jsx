@@ -57,9 +57,7 @@ export default function OpenSeadragonViewer({ href }) {
 
     const openTileSource = async () => {
       try {
-        // 清掉上一張，避免 world 疊一堆 item
         viewer.close();
-
         // 如果是自訂的 JSON 設定檔，先 fetch 再轉成 OSD 可吃的 tileSource 物件
         if (typeof href === 'string' && href.endsWith('.json')) {
           console.log('[OpenSeadragon] loading tile config:', href);
@@ -69,8 +67,6 @@ export default function OpenSeadragonViewer({ href }) {
           const cfg = await res.json();
           console.log('[OpenSeadragon] tile config json:', cfg);
 
-          // 預期 cfg 形狀：
-          // { width, height, tileSize, tileOverlap, maxLevel, tilesUrl, format }
           const {
             width,
             height,
@@ -79,6 +75,7 @@ export default function OpenSeadragonViewer({ href }) {
             maxLevel,
             tilesUrl = '/tiles',
             format = 'png',
+            uuid,
           } = cfg.tileSources || {};
 
           if (
@@ -92,6 +89,8 @@ export default function OpenSeadragonViewer({ href }) {
             );
           }
 
+          const versionedTilesUrl = uuid ? `${tilesUrl}/${uuid}` : tilesUrl;
+
           const tileSource = {
             width,
             height,
@@ -100,7 +99,7 @@ export default function OpenSeadragonViewer({ href }) {
             minLevel: 0,
             maxLevel,
             getTileUrl: (level, x, y) =>
-              `${tilesUrl}/${level}/${x}_${y}.${format}`,
+              `${versionedTilesUrl}/${level}/${x}_${y}.${format}`,
           };
 
           if (cancelled) return;
