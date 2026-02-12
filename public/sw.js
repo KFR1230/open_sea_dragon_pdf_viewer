@@ -46,13 +46,49 @@ function isNextStaticAsset(url) {
   return url.pathname.startsWith('/_next/static/');
 }
 
+// Helper: rebuild a non-redirected Response (for iOS Safari/PWA)
+async function stripRedirect(res) {
+  // iOS Safari can refuse navigation responses served from SW if the cached Response
+  // is marked as redirected (even if it ultimately renders fine when online).
+  // Rebuilding a fresh Response removes the redirected flag.
+  if (!res) return res;
+
+  // Only bother if it looks like a redirect or a redirected response.
+  const isRedirectStatus = [301, 302, 303, 307, 308].includes(res.status);
+  if (!res.redirected && !isRedirectStatus) return res;
+
+  const buf = await res.clone().arrayBuffer();
+  return new Response(buf, {
+    status: 200,
+    statusText: 'OK',
+    headers: res.headers,
+  });
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(APP_SHELL_CACHE);
-      // addAll will fail the whole install if any asset 404s.
-      // Keep this list accurate.
-      await cache.addAll(APP_SHELL_ASSETS);
+
+      // Manually precache to avoid storing redirected Responses for navigations.
+      for (const path of APP_SHELL_ASSETS) {
+        try {
+          const req = new Request(path, {
+            cache: 'reload',
+            // follow redirects so we end up with the real document
+            redirect: 'follow',
+          });
+
+          const res = await fetch(req);
+          if (!res || !res.ok) continue;
+
+          const clean = await stripRedirect(res);
+          await cache.put(req, clean.clone());
+        } catch {
+          // Skip missing assets; do not fail the whole SW install.
+        }
+      }
+
       self.skipWaiting();
     })()
   );
@@ -94,17 +130,25 @@ self.addEventListener('fetch', (event) => {
         const cache = await caches.open(APP_SHELL_CACHE);
         try {
           const networkRes = await fetch(req);
-          if (isSameOrigin(url) && networkRes && networkRes.ok) {
-            // cache navigations if you want
-            await cache.put(req, networkRes.clone());
+
+          // If this navigation involved redirects, rebuild a clean Response.
+          const cleanNetworkRes = await stripRedirect(networkRes);
+
+          if (isSameOrigin(url) && cleanNetworkRes && cleanNetworkRes.ok) {
+            await cache.put(req, cleanNetworkRes.clone());
           }
-          return networkRes;
+
+          return cleanNetworkRes;
         } catch (e) {
+          // Prefer an exact cached match for this route.
+          const cachedExact = await cache.match(req);
+          if (cachedExact) return await stripRedirect(cachedExact);
+
           const cachedHome = await cache.match('/');
-          if (cachedHome) return cachedHome;
+          if (cachedHome) return await stripRedirect(cachedHome);
 
           const cachedOffline = await cache.match('/offline');
-          if (cachedOffline) return cachedOffline;
+          if (cachedOffline) return await stripRedirect(cachedOffline);
 
           return new Response('Offline', {
             status: 503,
