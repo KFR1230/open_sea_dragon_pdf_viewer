@@ -25,7 +25,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
  * 常數定義 (對應 src/utils/constant)
  */
 const TILE_SIZE = 256;
-const AUTO_BASE_SCALE = 2.0;
+const AUTO_BASE_SCALE = 3.0;
 
 /**
  * 功能函式 (對應 src/utils/help)
@@ -43,6 +43,7 @@ const usePdfProcessor = () => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState({ message: '', type: 'info' });
   const [previews, setPreviews] = useState([]);
+  const [cacheSize, setCacheSize] = useState({});
 
   const loadPdf = async (file) => {
     setStatus({ message: '正在讀取 PDF...', type: 'info' });
@@ -76,6 +77,7 @@ const usePdfProcessor = () => {
 
     setIsProcessing(true);
     setPreviews([]);
+    setCacheSize({});
     setProgress(0);
 
     try {
@@ -140,6 +142,7 @@ const usePdfProcessor = () => {
         // const levelFolder = tilesFolder.folder(level.toString());
 
         const levelPreviews = [];
+        let total = 0; //總tiles容量
 
         for (let y = 0; y < rows; y++) {
           for (let x = 0; x < cols; x++) {
@@ -163,6 +166,8 @@ const usePdfProcessor = () => {
               tileCanvas.toBlob(r, 'image/png')
             );
 
+            total += blob.size;
+
             const versionedTilesUrl = uuid ? `/tiles/${uuid}` : '/tiles';
             const tilePath = `${versionedTilesUrl}/${level}/${x}_${y}.png`;
             const req = new Request(tilePath, { method: 'GET' });
@@ -178,15 +183,22 @@ const usePdfProcessor = () => {
             await cache.put(req, res);
             // levelFolder.file(`${x}_${y}.png`, blob);
 
-            // if (level === maxLevel && levelPreviews.length < 8) {
-            //   levelPreviews.push({
-            //     url: tileCanvas.toDataURL('image/png'),
-            //     label: `L${level}: ${x}_${y}`,
-            //   });
-            // }
+            //只取用8個圖片示意
+            if (level === maxLevel && levelPreviews.length < 8) {
+              levelPreviews.push({
+                url: tileCanvas.toDataURL('image/png'),
+                label: `L${level}: ${x}_${y}`,
+              });
+            }
           }
         }
 
+        if (level === maxLevel)
+          setCacheSize({
+            bytes: total,
+            kb: Math.floor(total / 1024, -2),
+            mb: Math.floor(total / 1024 / 1024, -2),
+          });
         if (level === maxLevel) setPreviews(levelPreviews);
         setProgress(Math.round((level / maxLevel) * 100));
       }
@@ -215,6 +227,7 @@ const usePdfProcessor = () => {
     progress,
     status,
     previews,
+    cacheSize,
     loadPdf,
     generateTiles,
   };
@@ -232,32 +245,8 @@ export default function PdfViewer() {
     previews,
     loadPdf,
     generateTiles,
+    cacheSize,
   } = usePdfProcessor();
-
-  // 初始化腳本載入
-  // useEffect(() => {
-  //   const loadExternalScripts = async () => {
-  //     const scripts = [
-  //       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-  //       'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-  //     ];
-
-  //     for (const src of scripts) {
-  //       if (!document.querySelector(`script[src="${src}"]`)) {
-  //         const script = document.createElement('script');
-  //         script.src = src;
-  //         script.async = false;
-  //         document.head.appendChild(script);
-  //         await new Promise((res) => (script.onload = res));
-  //       }
-  //     }
-
-  //     if (window.pdfjsLib) {
-  //       window.pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-  //     }
-  //   };
-  //   loadExternalScripts();
-  // }, []);
 
   /**
    * 事件處理器命名規範：handle[EventName]
@@ -293,7 +282,7 @@ export default function PdfViewer() {
   if (!pdfjs) return '載入中...';
 
   return (
-    <div className="h-full bg-slate-50 p-4 md:p-8 font-sans text-slate-900 mt-14">
+    <div className="min-h-svh bg-slate-50 p-4 md:p-8 font-sans text-slate-900 pt-16 md:pt-16">
       <div className="max-w-5xl mx-auto">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
@@ -303,7 +292,32 @@ export default function PdfViewer() {
             符合專案規範重構版本 (2^N 自動計算)
           </p>
         </header>
-
+        {status.message && (
+          <div
+            className={`p-4 rounded-xl flex items-center gap-4 border-2 shadow-sm animate-in slide-in-from-top mb-4 ${
+              status.type === 'success'
+                ? 'bg-green-50 border-green-100 text-green-700'
+                : 'bg-blue-50 border-blue-100 text-blue-700'
+            }`}
+          >
+            {isProcessing ? (
+              <Loader2 className="animate-spin shrink-0" size={20} />
+            ) : (
+              <CheckCircle2 className="shrink-0" size={20} />
+            )}
+            <div className="flex-1">
+              <p className="text-sm font-bold">{status.message}</p>
+              {isProcessing && (
+                <div className="w-full bg-blue-200 h-2 mt-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 左側操作區 */}
           <div className="space-y-6">
@@ -348,58 +362,47 @@ export default function PdfViewer() {
               </h2>
               <div className="space-y-4 text-xs text-slate-500 leading-relaxed">
                 <p>• 系統將依據 PDF 內容自動決定最大 Level N。</p>
-                <p>• 渲染倍率鎖定為高品質基數 (2.0)。</p>
-                <p>• 輸出結構完全相容於 OpenSeadragon。</p>
+                <p>• 渲染倍率鎖定為高品質基數 (3.0)。</p>
+                {/* <p>• 輸出結構完全相容於 OpenSeadragon。</p> */}
               </div>
               <button
                 disabled={!pdfInstance || isProcessing}
                 onClick={handleProcessTiles}
-                className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold disabled:bg-slate-200 disabled:text-slate-400 shadow-lg transition-all flex items-center justify-center gap-3"
+                className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold disabled:bg-slate-200 disabled:text-slate-400 shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
               >
                 {isProcessing ? (
                   <Loader2 className="animate-spin" />
                 ) : (
                   <Download size={20} />
                 )}
-                {isProcessing ? '正在執行重構邏輯...' : '產出瓦片包'}
+                {isProcessing ? '正在執行...' : '產生 tiles'}
               </button>
             </div>
           </div>
 
           {/* 右側預覽區 */}
           <div className="lg:col-span-2 space-y-4">
-            {status.message && (
-              <div
-                className={`p-4 rounded-xl flex items-center gap-4 border-2 shadow-sm animate-in slide-in-from-top ${
-                  status.type === 'success'
-                    ? 'bg-green-50 border-green-100 text-green-700'
-                    : 'bg-blue-50 border-blue-100 text-blue-700'
-                }`}
-              >
-                {isProcessing ? (
-                  <Loader2 className="animate-spin shrink-0" size={20} />
-                ) : (
-                  <CheckCircle2 className="shrink-0" size={20} />
+            <div className="bg-white p-6 rounded-2xl border shadow-sm flex flex-col flex-1 h-full">
+              <div className="flex flex-col items-start gap-2 md:items-center mb-6 md:flex-row">
+                <h2 className="px-3 font-bold text-slate-800 text-lg">
+                  產出預覽 ({previews.length ?? 0}張)
+                </h2>
+                {!!cacheSize.bytes && (
+                  <span className="py-2 px-3 rounded-md bg-gray-100 font-bold">
+                    總容量：{cacheSize.bytes}bytes
+                  </span>
                 )}
-                <div className="flex-1">
-                  <p className="text-sm font-bold">{status.message}</p>
-                  {isProcessing && (
-                    <div className="w-full bg-blue-200 h-2 mt-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-blue-600 h-full transition-all duration-500"
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
+                {!!cacheSize.mb && (
+                  <span className="py-2 px-3 rounded-md bg-gray-100 font-bold">
+                    {cacheSize.mb} MB
+                  </span>
+                )}
+                {!!cacheSize.kb && (
+                  <span className="py-2 px-3 rounded-md bg-gray-100 font-bold">
+                    {cacheSize.kb} KB
+                  </span>
+                )}
               </div>
-            )}
-
-            <div className="bg-white p-6 rounded-2xl border shadow-sm min-h-[500px] flex flex-col">
-              <h2 className="font-bold text-slate-800 flex items-center gap-2 text-lg mb-6">
-                瓦片產出預覽
-              </h2>
-
               {previews.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-100 rounded-xl overflow-y-auto max-h-[600px]">
                   {previews.map((tile, i) => (
