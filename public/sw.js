@@ -65,6 +65,29 @@ async function stripRedirect(res) {
   });
 }
 
+// Allow the client page to trigger immediate activation of a waiting SW.
+self.addEventListener('message', (event) => {
+  const data = event.data;
+  if (!data || typeof data !== 'object') return;
+
+  // Client can call: reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+  if (data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+
+  // Optional: allow manual cleanup if you decide to "disable" SW behavior.
+  // Client can call: navigator.serviceWorker.controller?.postMessage({ type: 'CLEAR_CACHES' })
+  if (data.type === 'CLEAR_CACHES') {
+    event.waitUntil(
+      (async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      })()
+    );
+  }
+});
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {

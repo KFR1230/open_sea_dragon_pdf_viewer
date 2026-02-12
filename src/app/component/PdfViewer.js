@@ -272,11 +272,42 @@ export default function PdfViewer() {
   };
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
+    async function activeSW() {
+      if (!('serviceWorker' in navigator)) return;
 
-    navigator.serviceWorker
-      .register('/sw.js')
-      .catch((err) => console.error('SW register failed', err));
+      const reg = await navigator.serviceWorker
+        .register('/sw.js')
+        .catch((err) => console.error('SW register failed', err));
+      if (!reg) return;
+
+      try {
+        await reg.update();
+      } catch {}
+      // 如果已經有 waiting（代表新版本下載好了），直接叫它跳過等待
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+      // 監聽後續更新
+      reg.addEventListener('updatefound', () => {
+        const sw = reg.installing;
+        if (!sw) return;
+
+        sw.addEventListener('statechange', () => {
+          // installed 且已有舊 controller => 這是更新（不是第一次安裝）
+          if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+            // 叫 waiting 立刻啟用
+            reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    }
+    activeSW();
   }, []);
 
   if (!pdfjs) return '載入中...';
